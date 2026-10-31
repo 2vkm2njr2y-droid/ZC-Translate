@@ -398,7 +398,7 @@ Start-Process dist\ZCTranslate\ZCTranslate.exe -ArgumentList '--no-window --port
 - 截图翻译依赖 Windows"截图工具"的"自动复制到剪贴板"设置；浏览器回退模式下截图期间页面不会自动隐藏。
 - 划译依赖 Windows UI Automation：部分自绘界面、游戏、管理员权限窗口、密码框读不到选区；不支持键盘 Shift+方向键选择。
 - 划译默认关闭，单次最多 4000 字；关闭主窗口后需从托盘恢复或退出。
-- 安装包未做代码签名，SmartScreen 会提示；便携版/安装版都可被整体移动，但安装版卸载后 `%LOCALAPPDATA%\ZCTranslate` 默认保留。
+- 安装包未做代码签名，SmartScreen 会提示；便携版/安装版都可被整体移动。安装版卸载时**保留** `%LOCALAPPDATA%\ZCTranslate`（历史、术语库、模型），需要彻底清理请手动删除。
 - 自定义模型需要复用内置档位目录名，或修改 `MODEL_PROFILES`（见上文）。
 
 ## 许可证

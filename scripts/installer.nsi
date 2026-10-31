@@ -28,9 +28,10 @@ OutFile "${OUTDIR}\ZCTranslate-${APP_VERSION}-win64-setup.exe"
 InstallDir "$LOCALAPPDATA\Programs\ZCTranslate"
 InstallDirRegKey HKCU "Software\ZCTranslate" "InstallDir"
 RequestExecutionLevel user
-SetCompressor /SOLID lzma
-SetCompressorDictSize 64
-SetShellVarContext current
+; 安装包约 670 MB：不能用 /SOLID（32 位 makensis 会耗尽地址空间报 mmap 错误），
+; 逐文件 LZMA 压缩内存占用低得多，体积略大。
+SetCompressor lzma
+SetCompressorDictSize 16
 ShowInstDetails show
 ShowUninstDetails show
 BrandingText "${APP_NAME} ${APP_VERSION}"
@@ -122,9 +123,6 @@ Section "Uninstall"
   DeleteRegKey HKCU "${UNINST_KEY}"
   DeleteRegKey HKCU "Software\ZCTranslate"
 
-  MessageBox MB_YESNO|MB_ICONQUESTION \
-    "是否同时删除用户数据目录？$\r$\n$LOCALAPPDATA\ZCTranslate$\r$\n$\r$\n其中包含设置、历史、术语库、翻译记忆、缓存与模型。" \
-    IDNO KeepData
-  RMDir /r "$LOCALAPPDATA\ZCTranslate"
-  KeepData:
+  ; 用户数据目录（%LOCALAPPDATA%\ZCTranslate：设置、历史、术语库、翻译记忆、
+  ; 编译缓存与模型）在卸载时一律保留，避免误删模型与历史；需要彻底清理请手动删除。
 SectionEnd

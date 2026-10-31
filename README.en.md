@@ -398,7 +398,7 @@ First golden set: 6 directions × 8 sentences (48), chrF++ (surface similarity o
 - Screenshot translation relies on the Windows Snipping Tool “automatically copy to clipboard” option; in browser-fallback mode the app window is not hidden while snipping.
 - Select-to-translate needs Windows UI Automation: custom-drawn UIs, games, elevated windows and password fields are unsupported; keyboard Shift+arrow selection is not auto-triggered.
 - Select-to-translate is off by default and capped at 4000 characters; after closing the main window use the tray to restore or exit.
-- The installer is unsigned (SmartScreen warning). Uninstalling keeps `%LOCALAPPDATA%\ZCTranslate` by default.
+- The installer is unsigned (SmartScreen warning). Uninstalling **keeps** `%LOCALAPPDATA%\ZCTranslate` (history, glossaries, models); delete it manually for a full cleanup.
 - Custom models must reuse the built-in profile folder names or extend `MODEL_PROFILES`.
 
 ## License

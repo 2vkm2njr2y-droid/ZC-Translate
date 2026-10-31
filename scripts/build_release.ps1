@@ -52,7 +52,19 @@ if (-not (Test-Path $exe)) { throw "未找到 $exe。请去掉 -SkipBuild 重新
 # ---------------------------------------------------------------- 发布前自检
 Write-Step "发布前自检"
 $problems = @()
-if (Test-Path (Join-Path $dist "data")) { $problems += "发行目录仍包含 data\" }
+
+# 运行打包版做验收测试时可能生成 dist\ZCTranslate\data（日志/数据库），发布前清掉。
+$dataDir = Join-Path $dist "data"
+if (Test-Path $dataDir) {
+    $resolvedDistForData = (Resolve-Path $dist).Path
+    $resolvedData = (Resolve-Path $dataDir).Path
+    if ($resolvedData -ne (Join-Path $resolvedDistForData "data")) {
+        throw "拒绝删除：$resolvedData 不是预期的数据目录"
+    }
+    Remove-Item -LiteralPath $resolvedData -Recurse -Force
+    Write-Host "已删除残留 data（验收测试产生）：$resolvedData" -ForegroundColor Yellow
+}
+
 if (Test-Path (Join-Path $dist "models")) { $problems += "发行目录仍包含 models\" }
 if (-not (Test-Path (Join-Path $dist "portable.flag"))) { $problems += "缺少 portable.flag（便携版需要）" }
 
@@ -110,15 +122,20 @@ if (-not $SkipInstaller) {
         New-Item -ItemType Directory -Force -Path $nsisDir | Out-Null
         $nsisZip = Join-Path $toolsDir "nsis-3.11.zip"
         $downloaded = $false
-        for ($attempt = 1; $attempt -le 2 -and -not $downloaded; $attempt++) {
-            try {
-                Write-Host "下载 NSIS（第 $attempt 次）…"
-                Invoke-WebRequest -Uri $NsisZipUrl -OutFile $nsisZip -UseBasicParsing -TimeoutSec 300
-                $downloaded = $true
-            } catch {
-                Write-Host "下载失败：$($_.Exception.Message)" -ForegroundColor Yellow
-                Start-Sleep -Seconds 3
+        for ($attempt = 1; $attempt -le 3 -and -not $downloaded; $attempt++) {
+            Write-Host "下载 NSIS（第 $attempt 次）…"
+            if (Test-Path $nsisZip) { Remove-Item -LiteralPath $nsisZip -Force }
+            # SourceForge 会先返回 HTML 中转页，必须用 curl 跟随重定向拿到真正的 zip。
+            & curl.exe -sSL --fail --retry 2 --max-time 300 -o $nsisZip $NsisZipUrl
+            if ($LASTEXITCODE -eq 0 -and (Test-Path $nsisZip)) {
+                $magic = [System.IO.File]::ReadAllBytes($nsisZip)[0..1]
+                if ($magic[0] -eq 0x50 -and $magic[1] -eq 0x4B) {
+                    $downloaded = $true
+                } else {
+                    Write-Host "下载内容不是 ZIP（可能是 SourceForge 中转页）。" -ForegroundColor Yellow
+                }
             }
+            if (-not $downloaded) { Start-Sleep -Seconds 3 }
         }
         if (-not $downloaded) { throw "无法下载 NSIS：$NsisZipUrl（可手动解压到 $nsisDir\nsis-3.11）" }
         Expand-Archive -Path $nsisZip -DestinationPath $nsisDir -Force
@@ -129,9 +146,52 @@ if (-not $SkipInstaller) {
     }
 
     Write-Step "生成 NSIS 安装包（LZMA，约 5–15 分钟）"
-    if (Test-Path $setupPath) { Remove-Item -LiteralPath $setupPath -Force }
-    & $makensis "/DAPPVERSION=$Version" "/DOUTDIR=$outDir" "/DDIST=$dist" "scripts\installer.nsi"
-    Assert-Exit "makensis"
+    # 两个环境相关的坑（本机实测）：
+    # 1) makensis 在 C:\Users\...\Temp 下创建 mmap 会失败（杀软/受控文件夹），
+    #    把 TEMP/TMP 指到仓库内 .tools\tmp 后再编译；
+    # 2) 输出直接写到发布目录偶尔报 "Can't open output file"，
+    #    先输出到 .tools\nsis-out，再复制到发布目录并重试。
+    $stagingDir = Join-Path $Root ".tools\nsis-out"
+    New-Item -ItemType Directory -Force -Path $stagingDir | Out-Null
+    $built = Join-Path $stagingDir "ZCTranslate-$Version-win64-setup.exe"
+    $nsisTemp = Join-Path $Root ".tools\tmp"
+    New-Item -ItemType Directory -Force -Path $nsisTemp | Out-Null
+
+    $savedTemp = $env:TEMP
+    $savedTmp = $env:TMP
+    $env:TEMP = $nsisTemp
+    $env:TMP = $nsisTemp
+    $compiled = $false
+    try {
+        for ($attempt = 1; $attempt -le 2 -and -not $compiled; $attempt++) {
+            if (Test-Path $built) { Remove-Item -LiteralPath $built -Force -ErrorAction SilentlyContinue }
+            & $makensis "/DAPPVERSION=$Version" "/DOUTDIR=$stagingDir" "/DDIST=$dist" "scripts\installer.nsi"
+            if ($LASTEXITCODE -eq 0 -and (Test-Path $built)) {
+                $compiled = $true
+            } else {
+                Write-Host "makensis 第 $attempt 次失败（退出码 $LASTEXITCODE），准备重试…" -ForegroundColor Yellow
+                Start-Sleep -Seconds 3
+            }
+        }
+    } finally {
+        $env:TEMP = $savedTemp
+        $env:TMP = $savedTmp
+    }
+    if (-not $compiled) { throw "makensis 编译失败；若已有旧安装包可检查 $stagingDir" }
+
+    if (-not (Test-Path $built)) { throw "makensis 未生成 $built" }
+    if (Test-Path $setupPath) { Remove-Item -LiteralPath $setupPath -Force -ErrorAction SilentlyContinue }
+    $copied = $false
+    for ($i = 1; $i -le 5 -and -not $copied; $i++) {
+        try {
+            Copy-Item -LiteralPath $built -Destination $setupPath -Force
+            $copied = $true
+        } catch {
+            Write-Host "复制安装包失败（第 $i 次）：$($_.Exception.Message)" -ForegroundColor Yellow
+            Start-Sleep -Seconds 2
+        }
+    }
+    if (-not $copied) { throw "无法写入 $setupPath，安装包保留在 $built" }
     Write-Host ("安装包：{0}（{1:N1} MB）" -f $setupPath, ((Get-Item $setupPath).Length / 1MB)) -ForegroundColor Green
 }
 
