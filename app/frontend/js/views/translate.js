@@ -271,7 +271,7 @@ export function render(ctx) {
         metaEl,
       ]);
       if (block.translate === false) node.classList.add("code-block");
-      blockEls.set(block.id, { node, textEl, metaEl, source: block.text });
+      blockEls.set(block.id, { node, textEl, metaEl, source: block.text, streamNode: null });
       targetContent.appendChild(node);
     }
   }
@@ -286,7 +286,7 @@ export function render(ctx) {
       textEl,
       metaEl,
     ]);
-    item = { node, textEl, metaEl, source: sourceTextValue };
+    item = { node, textEl, metaEl, source: sourceTextValue, streamNode: null };
     blockEls.set(blockId, item);
     targetContent.appendChild(node);
     return item;
@@ -423,13 +423,19 @@ export function render(ctx) {
         delta: (data) => {
           const item = blockEls.get(data.block_id);
           if (!item) return;
-          item.textEl.textContent = (item.textEl.textContent || "") + (data.text || "");
+          if (!item.streamNode) {
+            item.textEl.textContent = "";
+            item.streamNode = document.createTextNode("");
+            item.textEl.appendChild(item.streamNode);
+          }
+          item.streamNode.appendData(data.text || "");
           item.textEl.classList.add("stream-caret");
         },
         block_reset: (data) => {
           const item = blockEls.get(data.block_id);
           if (!item) return;
           item.textEl.textContent = "";
+          item.streamNode = null;
           clear(item.metaEl);
           item.metaEl.appendChild(h("span", { class: "hint", text: data.reason || "正在重试…" }));
         },
@@ -437,6 +443,7 @@ export function render(ctx) {
           const item = ensureBlock(data.block_id, "");
           item.node.classList.remove("active");
           item.textEl.classList.remove("stream-caret");
+          item.streamNode = null;
           item.textEl.textContent = data.text || "";
           renderBlockMeta(item, data);
         },

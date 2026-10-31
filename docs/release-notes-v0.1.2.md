@@ -1,8 +1,14 @@
 # ZC 离线翻译 v0.1.2 / ZC Translate v0.1.2
 
-文档与合规版本（Windows 11 x64）。没有功能变更，翻译、OCR、语音和文档处理逻辑与 v0.1.1 相同。
+文档、合规与稳定性版本（Windows 11 x64）。没有新增翻译功能；重点修复长文本翻译时卡顿、长时间无响应甚至闪退的问题。
 
 ## 简体中文
+
+### 修复
+
+- 长文本按行切分时，原来每一行都会单独调用一次模型。几万字的字幕、日志或分行文档会排成几百上千次推理，界面长时间无响应。现在会合并相邻短行，把上千个块压到几十个，速度、内存和界面都更稳定。
+- 流式输出改为增量追加，不再每收到一个 token 就重建整段译文，避免长文本把 WebView2 拖死。
+- 设置页“关于”中的版权与许可证声明现在会随程序一起显示。
 
 ### 变更
 
@@ -41,6 +47,12 @@ Get-FileHash .\ZCTranslate-0.1.2-win64-portable.zip -Algorithm SHA256
 ---
 
 ## English
+
+### Fixes
+
+- Line-based splitting used to call the model once per line. A long subtitle file or log with thousands of lines became hundreds or thousands of sequential inferences, leaving the window unresponsive for a long time. Adjacent short lines are now coalesced, reducing thousands of blocks to dozens, which keeps speed, memory and the UI stable.
+- Streaming output is appended incrementally instead of rebuilding the whole result text on every token, so long translations no longer overload WebView2.
+- The copyright and license notice in Settings → About is now shipped with the app.
 
 ### Changes
 

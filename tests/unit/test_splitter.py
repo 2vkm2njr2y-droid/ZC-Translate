@@ -17,6 +17,23 @@ def test_line_mode_for_short_lines():
     assert all(block.kind == "line" for block in blocks)
 
 
+def test_many_short_lines_are_coalesced():
+    text = "\n".join(f"line {index}" for index in range(200))
+    blocks = split_blocks(text)
+    assert len(blocks) <= 40
+    assert join_blocks(blocks, {block.index: block.text for block in blocks}) == text
+
+
+def test_coalescing_keeps_fenced_code_out_of_translation():
+    lines = "\n".join(f"line {index}" for index in range(100))
+    text = f"{lines}\n\n```\ncode\n```\n\n{lines}"
+    blocks = split_blocks(text)
+    assert len([block for block in blocks if block.translate]) <= 40
+    code = [block for block in blocks if not block.translate]
+    assert len(code) == 1
+    assert "code" in code[0].text
+
+
 def test_long_text_is_split_and_rejoined():
     text = "这是第一句。" * 400
     blocks = split_blocks(text, max_chars=100)

@@ -75,6 +75,9 @@ export function initCompact(ctx) {
   let capturing = false;
   let voiceController = null;
   const blocks = new Map();
+  let renderedText = "";
+  let renderedBlockId = null;
+  let renderedBlockStart = 0;
 
   // Decorate the static shell with the shared icon set.
   swapButton.appendChild(icon("swap", 15));
@@ -235,12 +238,43 @@ export function initCompact(ctx) {
     else resultTextEl.scrollTop = previousTop;
   }
 
-  function renderBlocks(streamingText = false) {
-    const text = [...blocks.entries()]
-      .sort((a, b) => a[0] - b[0])
-      .map(([, value]) => value)
-      .join("\n\n");
-    setResultText(text, streamingText);
+  function resetRenderedResult() {
+    renderedText = "";
+    renderedBlockId = null;
+    renderedBlockStart = 0;
+    resultTextEl.textContent = "";
+  }
+
+  function appendRenderedResult(text, streamingText = true) {
+    if (!text) return;
+    const previousTop = resultTextEl.scrollTop;
+    const follow = isOutputAtBottom();
+    renderedText += text;
+    resultTextEl.appendChild(document.createTextNode(text));
+    resultTextEl.classList.toggle("streaming", streamingText);
+    if (follow) scrollOutputToBottom();
+    else resultTextEl.scrollTop = previousTop;
+  }
+
+  function beginRenderedBlock(blockId) {
+    if (renderedBlockId === blockId) return;
+    if (renderedText) appendRenderedResult("\n\n", true);
+    renderedBlockId = blockId;
+    renderedBlockStart = renderedText.length;
+  }
+
+  function resetRenderedBlock(blockId) {
+    blocks.set(blockId, "");
+    renderedText = renderedText.slice(0, renderedBlockStart);
+    resultTextEl.textContent = renderedText;
+    resultTextEl.classList.add("streaming");
+  }
+
+  function finishRenderedBlock(blockId, text) {
+    beginRenderedBlock(blockId);
+    blocks.set(blockId, text || "");
+    renderedText = `${renderedText.slice(0, renderedBlockStart)}${text || ""}`;
+    setResultText(renderedText, false);
   }
 
   function finishTranslation() {
@@ -307,9 +341,9 @@ export function initCompact(ctx) {
     };
 
     blocks.clear();
+    resetRenderedResult();
     sawError = false;
     showResult();
-    resultTextEl.textContent = "";
     resultStatusEl.textContent = "正在连接模型…";
     resultMetaEl.textContent = "";
     setBusy(true);
@@ -325,6 +359,7 @@ export function initCompact(ctx) {
         },
         meta: (data) => {
           blocks.clear();
+          resetRenderedResult();
           for (const block of data.blocks || []) blocks.set(block.id, "");
           resultStatusEl.textContent = `${data.device || ""} · ${data.model || ""}`;
           store.engine = {
@@ -338,32 +373,39 @@ export function initCompact(ctx) {
         },
         block_start: (data) => {
           if (!blocks.has(data.block_id)) blocks.set(data.block_id, "");
+          beginRenderedBlock(data.block_id);
           resultStatusEl.textContent = "翻译中…";
           resultTextEl.classList.add("streaming");
         },
         delta: (data) => {
+          beginRenderedBlock(data.block_id);
           blocks.set(data.block_id, `${blocks.get(data.block_id) || ""}${data.text || ""}`);
-          renderBlocks(true);
+          appendRenderedResult(data.text || "");
         },
         block_reset: (data) => {
-          blocks.set(data.block_id, "");
-          renderBlocks(true);
+          resetRenderedBlock(data.block_id);
           resultStatusEl.textContent = data.reason || "正在重试…";
         },
         block_done: (data) => {
-          blocks.set(data.block_id, data.text || "");
-          renderBlocks(false);
+          finishRenderedBlock(data.block_id, data.text || "");
           if (data.tok_s) resultMetaEl.textContent = `${data.tok_s} tok/s${data.ttft_ms ? ` · 首字 ${Math.round(data.ttft_ms)} ms` : ""}`;
           if ((data.warnings || []).length) resultStatusEl.textContent = "有提示，建议复核";
           else resultStatusEl.textContent = "完成";
         },
         done: (data) => {
           const finalText = data.text || [...blocks.values()].join("\n\n");
+          renderedText = finalText;
+          renderedBlockId = null;
+          renderedBlockStart = 0;
           setResultText(finalText, false);
           resultStatusEl.textContent = data.cancelled ? "已取消" : "完成";
           resultMetaEl.textContent = `${data.device || ""} · ${data.elapsed_ms || 0} ms · ${data.tok_s || 0} tok/s`;
           store.draftTarget = finalText;
-          localStorage.setItem("zc.draft.target", finalText);
+          try {
+            localStorage.setItem("zc.draft.target", finalText);
+          } catch {
+            /* quota exceeded on very large results */
+          }
           store.engine = {
             ...(store.engine || {}),
             state: "ready",
@@ -375,7 +417,9 @@ export function initCompact(ctx) {
         error: (data) => {
           sawError = true;
           resultStatusEl.textContent = "失败";
-          setResultText(data.message || "翻译失败", false);
+          renderedText = data.message || "翻译失败";
+          renderedBlockId = null;
+          setResultText(renderedText, false);
           ctx.toast(data.message || "翻译失败", "error", 5000);
           finishTranslation();
         },
@@ -385,7 +429,9 @@ export function initCompact(ctx) {
         resultStatusEl.textContent = "已取消";
       } else if (!sawError) {
         resultStatusEl.textContent = "失败";
-        setResultText(error.message || String(error), false);
+        renderedText = error.message || String(error);
+        renderedBlockId = null;
+        setResultText(renderedText, false);
         ctx.toast(error.message || "翻译失败", "error", 5000);
       }
     } finally {

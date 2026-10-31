@@ -16,6 +16,11 @@ _CLOSERS = "」』”’）)】》〉\"'"
 _PARA_SEP = re.compile(r"(\n{2,})")
 _LINE_SEP = re.compile(r"(\n)")
 
+# A long document can contain thousands of short lines.  Translating each line
+# separately is both slow (one model call per line) and hard on the UI, so cap
+# the number of model calls by merging adjacent blocks once this limit is hit.
+MAX_BLOCKS = 40
+
 
 @dataclass
 class Block:
@@ -112,6 +117,60 @@ def _split_preserving(text: str, pattern: re.Pattern[str]) -> list[tuple[str, st
     return result
 
 
+def _coalesce_blocks(blocks: list[Block], max_chars: int,
+                     max_blocks: int = MAX_BLOCKS) -> list[Block]:
+    """Merge adjacent translatable blocks when a document has too many of them.
+
+    This keeps small inputs line-by-line, but prevents a pasted 10k-character
+    subtitle/log file from turning into hundreds of sequential model calls.
+    """
+    translatable = [block for block in blocks if block.translate]
+    if len(translatable) <= max_blocks:
+        return blocks
+
+    total_chars = sum(len(block.text) for block in translatable)
+    target = max(1, min(max_chars, (total_chars + max_blocks - 1) // max_blocks))
+
+    result: list[Block] = []
+    group: list[Block] = []
+    group_chars = 0
+
+    def flush() -> None:
+        nonlocal group, group_chars
+        if not group:
+            return
+        text = "".join(block.text + block.sep_after for block in group[:-1]) + group[-1].text
+        result.append(Block(
+            index=len(result),
+            text=text,
+            sep_after=group[-1].sep_after,
+            translate=True,
+            kind=group[0].kind,
+        ))
+        group = []
+        group_chars = 0
+
+    for block in blocks:
+        if not block.translate:
+            flush()
+            result.append(Block(
+                index=len(result),
+                text=block.text,
+                sep_after=block.sep_after,
+                translate=False,
+                kind=block.kind,
+            ))
+            continue
+        if group and (block.kind != group[0].kind or group_chars + len(block.text) > max_chars):
+            flush()
+        group.append(block)
+        group_chars += len(block.text)
+        if group_chars >= target:
+            flush()
+    flush()
+    return result
+
+
 def split_blocks(text: str, mode: str = "auto",
                  max_chars: int = MAX_BLOCK_CHARS) -> list[Block]:
     text = text.replace("\r\n", "\n").replace("\r", "\n")
@@ -150,7 +209,7 @@ def split_blocks(text: str, mode: str = "auto",
                     kind="code" if fenced else effective,
                 )
             )
-    return blocks
+    return _coalesce_blocks(blocks, max_chars)
 
 
 def join_blocks(blocks: list[Block], translations: dict[int, str]) -> str:

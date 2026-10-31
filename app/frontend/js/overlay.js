@@ -25,6 +25,8 @@ const state = {
   blocks: new Map(),
   hideTimer: 0,
   measureTimer: 0,
+  renderTimer: 0,
+  renderStreaming: false,
   lastSize: "",
   lastMeasureAt: 0,
   bridge: null,
@@ -64,6 +66,32 @@ function renderTarget(streaming) {
   targetEl.textContent = value;
   targetEl.classList.toggle("streaming", Boolean(streaming));
   scheduleMeasure();
+}
+
+function cancelScheduledRender() {
+  if (state.renderTimer) {
+    window.clearTimeout(state.renderTimer);
+    state.renderTimer = 0;
+  }
+  state.renderStreaming = false;
+}
+
+function flushRender(streaming) {
+  cancelScheduledRender();
+  renderTarget(streaming);
+}
+
+function scheduleRender(streaming) {
+  // Long selections can stream thousands of deltas.  Coalesce them so the
+  // hidden WebView and the native resize bridge are not called per token.
+  state.renderStreaming = state.renderStreaming || Boolean(streaming);
+  if (state.renderTimer) return;
+  state.renderTimer = window.setTimeout(() => {
+    state.renderTimer = 0;
+    const value = state.renderStreaming;
+    state.renderStreaming = false;
+    renderTarget(value);
+  }, 50);
 }
 
 function measureNow() {
@@ -119,6 +147,7 @@ function cancel() {
   state.version += 1;
   window.clearTimeout(state.hideTimer);
   window.clearTimeout(state.measureTimer);
+  cancelScheduledRender();
   if (state.controller) {
     try {
       state.controller.abort();
@@ -181,6 +210,7 @@ async function show(payload) {
   state.controller = null;
   state.text = text;
   state.blocks = new Map();
+  cancelScheduledRender();
   state.lastSize = "";
   state.target = "zh";
   root.classList.remove("hidden");
@@ -244,15 +274,13 @@ async function show(payload) {
         if (version !== state.version) return;
         if (!state.blocks.has(data.block_id)) state.blocks.set(data.block_id, "");
         setStatus("翻译中…");
-        renderTarget(true);
-        scheduleMeasure();
+        scheduleRender(true);
       },
       block_reset: (data) => {
         if (version !== state.version) return;
         state.blocks.set(data.block_id, "");
         setStatus(data.reason || "正在重试…");
-        renderTarget(true);
-        scheduleMeasure();
+        scheduleRender(true);
       },
       delta: (data) => {
         if (version !== state.version) return;
@@ -260,18 +288,18 @@ async function show(payload) {
           data.block_id,
           `${state.blocks.get(data.block_id) || ""}${data.text || ""}`,
         );
-        renderTarget(true);
-        scheduleMeasure();
+        scheduleRender(true);
       },
       block_done: (data) => {
         if (version !== state.version) return;
         state.blocks.set(data.block_id, data.text || "");
-        renderTarget(false);
+        flushRender(false);
         setStatus((data.warnings || []).length ? "完成（有提示，建议复核）" : "完成");
         scheduleMeasure(true);
       },
       done: (data) => {
         if (version !== state.version) return;
+        cancelScheduledRender();
         const finalText = data.text || [...state.blocks.values()].join("\n\n");
         if (finalText) {
           targetEl.textContent = finalText;

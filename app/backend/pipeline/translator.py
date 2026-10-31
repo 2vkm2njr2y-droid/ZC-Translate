@@ -123,6 +123,10 @@ class TranslationService:
             })
 
             warnings.extend(ctx.warnings)
+            logger.info(
+                "Translation start: chars=%d blocks=%d profile=%s device=%s",
+                len(req.text), len(blocks), ctx.profile_id, ctx.resolved.device,
+            )
             prev_source = ""
             prev_target = ""
 
@@ -271,6 +275,10 @@ class TranslationService:
                 "history_id": history_id,
             })
         else:
+            logger.info(
+                "Translation done: status=%s blocks=%d chars=%d elapsed_ms=%d",
+                status, len(blocks), len(result_text), elapsed_ms,
+            )
             emit("done", {
                 "status": status,
                 "history_id": history_id,
