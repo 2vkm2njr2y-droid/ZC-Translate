@@ -90,7 +90,7 @@
 
 **页面打不开/401**：请从 `启动翻译器.bat` 打开；本地 API 只接受启动器生成的一次性 token。
 
-**7B 未安装**：运行 `准备模型.bat` 选择 quality，或执行 `prepare_model.py --profile quality`；7B 建议 GPU/CPU。准备好后可在设置中设为当前。注意仓库与发行包都不包含模型，必须先自行准备（见 README 的“模型”一节）。
+**7B 未安装**：运行 `准备模型.bat` 选择 quality，或执行 `prepare_model.py --profile quality`；7B 建议 GPU/CPU。准备好后可在设置中设为当前。注意仓库与发行包都不包含模型，必须先自行准备（见 README 的“准备模型”一节）。
 
 ## 完全离线
 

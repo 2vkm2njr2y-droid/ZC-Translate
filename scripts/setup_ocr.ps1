@@ -1,4 +1,4 @@
-$ErrorActionPreference = "Stop"
+﻿$ErrorActionPreference = "Stop"
 $python = Join-Path $PSScriptRoot "..\.venv-runtime\Scripts\python.exe"
 if (-not (Test-Path $python)) {
     throw "找不到 .venv-runtime，请先运行 scripts\setup_env.ps1"

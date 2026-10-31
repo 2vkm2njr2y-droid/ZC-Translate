@@ -102,6 +102,7 @@ $copyFiles = @(
     @{ Source = "README.ko.md"; Target = "README.ko.md" },
     @{ Source = "README.es.md"; Target = "README.es.md" },
     @{ Source = "LICENSE"; Target = "LICENSE" },
+    @{ Source = "NOTICE"; Target = "NOTICE" },
     @{ Source = "THIRD_PARTY_NOTICES.md"; Target = "THIRD_PARTY_NOTICES.md" },
     @{ Source = "docs\licensing.md"; Target = "LICENSING.md" },
     @{ Source = "assets\zc-translate.ico"; Target = "zc-translate.ico" },
@@ -112,6 +113,31 @@ foreach ($item in $copyFiles) {
         Copy-Item $item.Source (Join-Path $resolvedDist $item.Target) -Force
     }
 }
+
+# 收集依赖的许可证原文。MIT / BSD / Apache-2.0 等许可证要求随二进制分发时
+# 保留版权与许可声明；PyInstaller 默认只带 dist-info 元数据，不带这些文件。
+$licenseRoot = Join-Path $resolvedDist "licenses"
+if (Test-Path $licenseRoot) { Remove-Item -LiteralPath $licenseRoot -Recurse -Force }
+New-Item -ItemType Directory -Force -Path $licenseRoot | Out-Null
+$sitePackages = Join-Path $Root ".venv-runtime\Lib\site-packages"
+if (Test-Path $sitePackages) {
+    Get-ChildItem $sitePackages -Directory -Filter "*.dist-info" -ErrorAction SilentlyContinue | ForEach-Object {
+        $packageName = $_.Name -replace '\.dist-info$', ''
+        $dest = Join-Path $licenseRoot $packageName
+        $licenseDir = Join-Path $_.FullName "licenses"
+        if (Test-Path $licenseDir) {
+            Copy-Item -LiteralPath $licenseDir -Destination $dest -Recurse -Force
+        } else {
+            $licenseFiles = Get-ChildItem $_.FullName -File -ErrorAction SilentlyContinue |
+                Where-Object { $_.Name -match '^(LICEN[CS]E|COPYING|NOTICE)' }
+            if ($licenseFiles) {
+                New-Item -ItemType Directory -Force -Path $dest | Out-Null
+                $licenseFiles | ForEach-Object { Copy-Item -LiteralPath $_.FullName -Destination $dest -Force }
+            }
+        }
+    }
+}
+Write-Host "已收集第三方许可证原文：$licenseRoot" -ForegroundColor Green
 
 function Convert-ToCrlf([string]$text) {
     return ($text -replace "`r`n", "`n") -replace "`n", "`r`n"

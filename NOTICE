@@ -1,0 +1,22 @@
+ZC Translate
+Copyright (C) 2026 ZC Translate contributors
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, version 3.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public
+License along with this program.  If not, see
+<https://www.gnu.org/licenses/>.
+
+Corresponding source code:
+https://github.com/2vkm2njr2y-droid/ZC-Translate
+
+Third-party components and their licenses:
+see THIRD_PARTY_NOTICES.md. The bundled license texts are in the
+licenses/ directory of each release package.

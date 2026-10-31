@@ -1,8 +1,8 @@
 # 第三方组件、模型与许可证
 
-ZC 离线翻译（ZC Translate）本体以 **GNU Affero General Public License v3.0（AGPL-3.0-only）** 发布，全文见仓库根目录 `LICENSE`。
+ZC 离线翻译（ZC Translate）本体以 **GNU Affero General Public License v3.0（AGPL-3.0-only）** 发布，全文见仓库根目录 `LICENSE`，版权与担保声明见 `NOTICE`。
 
-本文件列出项目使用或打包的第三方组件、模型及其许可证。版本号与 `requirements*.txt` 和发行包 `dist/ZCTranslate/_internal` 中的实际版本一致（2026-10 快照）。
+本文件列出项目使用或打包的第三方组件、模型及其许可证。版本号与 `requirements*.txt` 和发行包 `dist/ZCTranslate/_internal` 中的实际版本一致（2026-10 快照）。发行包内的 `licenses/` 目录收录各依赖的许可证原文。
 
 > 本文件不是法律意见。再分发前请自行核对上游许可证原文；各组件许可证以其官方发布为准。
 
@@ -41,7 +41,7 @@ ZC 离线翻译（ZC Translate）本体以 **GNU Affero General Public License v
 | Pillow | 13.0.0 | 图片读取、屏幕截图 | MIT-CMU（HPND） |
 | python-docx | 1.2.0 | DOCX 读写 | MIT |
 
-> **PyMuPDF 声明**：PyMuPDF 采用 AGPL-3.0 / Artifex 商业许可双授权。本项目整体已是 AGPL-3.0，与其兼容；发行包内 `pymupdf` 二进制按 AGPL-3.0 分发，源码见 <https://github.com/pymupdf/PyMuPDF>。若你需要闭源或商业分发，请联系 Artifex 获取商业许可，并替换本项目代码（见 `docs/licensing.md`）。
+> **PyMuPDF 声明**：PyMuPDF 采用 AGPL-3.0 / Artifex 商业许可双授权。本项目整体已是 AGPL-3.0，与其兼容；发行包内 `pymupdf` 二进制按 AGPL-3.0 分发，2.0 版源码见 <https://github.com/pymupdf/PyMuPDF>。若你需要闭源或商业分发，请联系 Artifex 获取商业许可，并替换本项目代码（见 `docs/licensing.md`）。
 >
 > PyMuPDF 2.0 会安装 `pymupdf_layout` 与 `pymupdf4llm` 两个附加包，二者同为 AGPL-3.0；本项目不直接调用，仅作为传递依赖存在。
 
@@ -122,7 +122,7 @@ ZC 离线翻译（ZC Translate）本体以 **GNU Affero General Public License v
 - 除 PyMuPDF 系列外，全部依赖为 MIT / BSD / Apache-2.0 / MIT-CMU / PSF-2.0 / MPL-2.0 / zlib 级别，均可与 AGPL-3.0 组合。
 - MPL-2.0（`certifi`、`tqdm`）为文件级弱著佐权，与 AGPL-3.0 兼容。
 - PyMuPDF 为 AGPL-3.0，与本项目同族，可直接捆绑分发。
-- 完整分析、GPL-3.0 可行性讨论与再分发检查清单见 `docs/licensing.md`。
+- 完整兼容性分析与再分发检查清单见 `docs/licensing.md`；发行包 `licenses/` 目录保留各依赖的许可证原文。
 
 ## 10. 免责
 

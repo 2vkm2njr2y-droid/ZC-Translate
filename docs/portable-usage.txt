@@ -64,7 +64,7 @@ ZC 离线翻译 · 便携版使用说明
 6. 未签名提示：本程序未做代码签名，首次运行 SmartScreen 会拦截，点“更多信息”→“仍要运行”。
 
 九、模型与许可证
-1. 本包不包含翻译模型。请先参考仓库 README 的“模型”一节，用 PowerShell 脚本下载并转换 Hy-MT2，再放到本目录或用 models-path.txt 指向它。
-2. 本程序以 GNU Affero General Public License v3.0（AGPL-3.0-only）发布，许可证全文见同目录 LICENSE，源码见 https://github.com/2vkm2njr2y-droid/ZC-Translate 。
-3. 翻译模型 Hy-MT2 为 Apache-2.0；第三方组件清单见同目录 THIRD_PARTY_NOTICES.md。
+1. 本包不包含翻译模型。请先参考仓库 README 的“准备模型”一节，用 PowerShell 脚本下载并转换 Hy-MT2，再放到本目录或用 models-path.txt 指向它。
+2. 本程序以 GNU Affero General Public License v3.0（AGPL-3.0-only）发布，许可证全文见同目录 LICENSE，版权与担保声明见同目录 NOTICE，源码见 https://github.com/2vkm2njr2y-droid/ZC-Translate 。
+3. 翻译模型 Hy-MT2 为 Apache-2.0；第三方组件清单见同目录 THIRD_PARTY_NOTICES.md，各依赖的许可证原文见 licenses 目录。
 

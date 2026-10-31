@@ -91,9 +91,10 @@ foreach ($file in $textFiles) {
     }
 }
 foreach ($name in @("README.md", "README.en.md", "README.ja.md", "README.ko.md", "README.es.md",
-                    "THIRD_PARTY_NOTICES.md", "LICENSING.md")) {
+                    "NOTICE", "THIRD_PARTY_NOTICES.md", "LICENSING.md")) {
     if (-not (Test-Path (Join-Path $dist $name))) { $problems += "缺少 $name" }
 }
+if (-not (Test-Path (Join-Path $dist "licenses"))) { $problems += "缺少 licenses（第三方许可证原文）" }
 if ($problems.Count -gt 0) {
     throw ("发布自检未通过：`n - " + ($problems -join "`n - "))
 }
@@ -109,8 +110,12 @@ if (-not $SkipZip) {
     $entries = & tar.exe -tf $zipPath
     Assert-Exit "ZIP 校验"
     foreach ($expected in @("ZCTranslate/ZCTranslate.exe", "ZCTranslate/LICENSE",
+                            "ZCTranslate/NOTICE", "ZCTranslate/THIRD_PARTY_NOTICES.md",
                             "ZCTranslate/Start-ZCTranslate.bat", "ZCTranslate/README.md")) {
         if (-not ($entries -contains $expected)) { throw "ZIP 缺少 $expected" }
+    }
+    if (-not ($entries | Where-Object { $_ -like "ZCTranslate/licenses/*" })) {
+        throw "ZIP 缺少 licenses 目录"
     }
     Write-Host ("ZIP：{0}（{1:N1} MB）" -f $zipPath, ((Get-Item $zipPath).Length / 1MB)) -ForegroundColor Green
 }

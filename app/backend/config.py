@@ -13,7 +13,7 @@ from pathlib import Path
 
 APP_NAME = "ZC 离线翻译"
 APP_ID = "zc-translate"
-APP_VERSION = "0.1.1"
+APP_VERSION = "0.1.2"
 PROMPT_VERSION = "hymt2-v1"
 DB_SCHEMA_VERSION = 1
 

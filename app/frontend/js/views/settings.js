@@ -465,6 +465,13 @@ export function render(ctx) {
         ]),
         h("div", { class: "divider-line" }),
         h("div", { class: "hint", text: "准确率取决于原文、领域和模型档位；法律、文学等场景建议人工审校。" }),
+        h("div", { class: "divider-line" }),
+        h("div", { class: "hint", text: "Copyright (C) 2026 ZC Translate contributors" }),
+        h("div", {
+          class: "hint",
+          text: "本程序以 GNU AGPL-3.0-only 发布，不提供担保，可自由再分发。许可证全文见程序目录的 LICENSE 或 https://www.gnu.org/licenses/agpl-3.0.html",
+        }),
+        h("div", { class: "hint", text: "源码：https://github.com/2vkm2njr2y-droid/ZC-Translate" }),
       ]),
     ]),
   ]);
