@@ -1,0 +1,9 @@
+# 仅模型准备环境使用（.venv-convert）
+# optimum-intel 需要包含 Hy-MT2 支持的 main 分支，见 scripts/setup_env.ps1
+torch==2.15.0
+transformers==5.6.2
+optimum==2.3.0
+nncf==3.4.0
+openvino==2026.4.1
+openvino-tokenizers==2026.4.1.0
+modelscope==1.40.2

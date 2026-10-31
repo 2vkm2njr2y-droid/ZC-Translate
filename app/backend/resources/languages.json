@@ -1,0 +1,10 @@
+{
+  "ui": ["zh", "ja", "en"],
+  "prompt_names": {
+    "zh": {"zh": "中文", "en": "Chinese"},
+    "ja": {"zh": "日语", "en": "Japanese"},
+    "en": {"zh": "英语", "en": "English"}
+  },
+  "model_supported_languages": 33,
+  "note": "v1 exposes Chinese, Japanese and English. The underlying Hy-MT2 model supports 33 languages; extend this file and the UI to expose more."
+}

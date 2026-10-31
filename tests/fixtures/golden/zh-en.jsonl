@@ -1,0 +1,8 @@
+{"source": "今天天气真好。我们下午去公园散步吧。", "reference": "The weather is really nice today. Let's take a walk in the park this afternoon.", "domain": "daily"}
+{"source": "会议资料昨天已经发送给所有参会者。", "reference": "The meeting materials were sent to all participants yesterday.", "domain": "business"}
+{"source": "这个版本修复了缓存目录缺失时的崩溃问题。", "reference": "This version fixes a crash that occurred when the cache directory was missing.", "domain": "technical"}
+{"source": "请在下周一之前提交报销申请。", "reference": "Please submit your reimbursement request by next Monday.", "domain": "business"}
+{"source": "由于台风影响，明天的航班可能延误。", "reference": "Flights tomorrow may be delayed due to the typhoon.", "domain": "news"}
+{"source": "本产品支持中文、日语和英语三种语言。", "reference": "This product supports Chinese, Japanese, and English.", "domain": "product"}
+{"source": "如果忘记密码，可以在登录页面重置。", "reference": "If you forget your password, you can reset it on the login page.", "domain": "ui"}
+{"source": "这家餐厅的招牌菜是红烧肉。", "reference": "The signature dish at this restaurant is braised pork belly.", "domain": "daily"}

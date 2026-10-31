@@ -1,0 +1,8 @@
+{"source": "The update fixes a crash when the cache directory is missing.", "reference": "更新修复了缓存目录缺失时的崩溃问题。", "domain": "technical"}
+{"source": "Please submit your expense report by next Monday.", "reference": "请在下周一之前提交报销单。", "domain": "business"}
+{"source": "The weather is lovely today. Let's take a walk in the park this afternoon.", "reference": "今天天气真好。我们下午去公园散步吧。", "domain": "daily"}
+{"source": "The meeting materials were sent to all participants yesterday.", "reference": "会议资料昨天已经发送给所有参会者。", "domain": "business"}
+{"source": "Flights tomorrow may be delayed because of the typhoon.", "reference": "受台风影响，明天的航班可能延误。", "domain": "news"}
+{"source": "This product supports Chinese, Japanese, and English.", "reference": "本产品支持中文、日语和英语。", "domain": "product"}
+{"source": "If you forget your password, you can reset it on the login page.", "reference": "如果忘记密码，可以在登录页面重置。", "domain": "ui"}
+{"source": "The signature dish at this restaurant is braised pork belly.", "reference": "这家餐厅的招牌菜是红烧肉。", "domain": "daily"}

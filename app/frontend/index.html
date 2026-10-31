@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="system">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="zc-token" content="__ZC_TOKEN__">
+  <meta name="zc-version" content="__APP_VERSION__">
+  <title>ZC 离线翻译</title>
+  <link rel="icon" type="image/png" href="/assets/zc-translate-icon.png">
+  <link rel="stylesheet" href="/assets/styles.css?v=__APP_VERSION__">
+</head>
+<body class="compact-mode">
+  <section id="compact-shell" aria-label="紧凑翻译">
+    <header class="compact-topbar">
+      <div class="compact-brand pywebview-drag-region"><span class="compact-mark">译</span><span class="compact-title">ZC 翻译</span></div>
+      <div class="compact-drag-handle pywebview-drag-region" aria-hidden="true" title="拖动窗口"></div>
+      <span id="compact-engine" class="compact-engine">正在检测设备…</span>
+      <button id="compact-theme" class="compact-icon-btn" type="button" aria-label="切换主题" title="切换主题"></button>
+      <div class="window-controls compact-controls">
+        <button id="compact-minimize" aria-label="最小化">−</button>
+        <button id="compact-close" aria-label="关闭到托盘" title="关闭到托盘">×</button>
+      </div>
+    </header>
+    <nav class="compact-tabs" aria-label="快速导航">
+      <button class="compact-tab active" data-route="translate" type="button">翻译</button>
+      <button class="compact-tab" data-route="document" type="button">文档翻译</button>
+      <button class="compact-tab" data-route="glossary" type="button">术语库</button>
+      <button class="compact-tab" data-route="history" type="button">历史</button>
+      <button class="compact-tab" data-route="settings" type="button">设置</button>
+    </nav>
+    <div id="compact-main" class="compact-main">
+    <div id="compact-translate-page" class="compact-translate-page">
+    <div class="compact-card">
+      <div class="compact-langrow">
+        <select id="compact-source" aria-label="源语言"></select>
+        <button id="compact-swap" class="compact-swap" type="button" aria-label="交换语言"></button>
+        <select id="compact-target" aria-label="目标语言"></select>
+        <select id="compact-glossary" class="compact-glossary" aria-label="术语库"></select>
+        <select id="compact-style" class="compact-style" aria-label="翻译风格"></select>
+      </div>
+      <div class="compact-divider"></div>
+      <div class="compact-voicebar" aria-label="语音功能">
+        <button id="compact-voice-conversation" class="compact-voice-btn" type="button">语音对话</button>
+        <button id="compact-voice-input" class="compact-voice-btn" type="button">语音输入</button>
+        <button id="compact-voice-download" class="compact-voice-btn ghost hidden" type="button">下载语音模型</button>
+        <span id="compact-voice-state" class="compact-voice-state">语音功能未就绪</span>
+      </div>
+      <textarea id="compact-text" spellcheck="false" placeholder="请输入文本" aria-label="原文"></textarea>
+      <div class="compact-inputbar">
+        <button id="compact-import" class="compact-plus" type="button" title="导入 txt/md">+</button>
+        <span id="compact-count" class="compact-count">0 字</span>
+        <button id="compact-translate" class="compact-translate primary" type="button"><span id="compact-translate-label">翻译</span></button>
+      </div>
+      <section id="compact-result" class="compact-result hidden" aria-live="polite">
+        <div class="compact-result-head">
+          <strong>译文</strong>
+          <span id="compact-result-status" class="compact-result-status"></span>
+          <div class="compact-result-actions">
+            <button id="compact-copy" class="ghost small" type="button">复制</button>
+            <button id="compact-clear" class="ghost small" type="button">清空</button>
+          </div>
+        </div>
+        <div id="compact-result-text" class="compact-result-text"></div>
+        <div id="compact-result-meta" class="compact-result-meta"></div>
+      </section>
+    </div>
+    </div>
+    <div id="compact-view-page" class="compact-view-page hidden"></div>
+    </div>
+    <footer class="compact-footer">
+      <button id="compact-screenshot" class="compact-foot-btn" type="button" title="Windows 截图翻译（PrintScreen）">截图翻译</button>
+      <label class="compact-toggle"><input id="compact-tm" type="checkbox" checked> 记忆库</label>
+      <span class="compact-footer-spacer"></span>
+      <button id="compact-settings" class="compact-grid" type="button" title="设置" aria-label="设置"></button>
+    </footer>
+  </section>
+  <div id="app">
+    <aside id="sidebar">
+      <div class="brand">
+        <div class="brand-mark">译</div>
+        <div class="brand-text">
+          <strong>ZC 离线翻译</strong>
+          <span>中 · 日 · 英</span>
+        </div>
+      </div>
+      <nav id="nav" aria-label="主导航"></nav>
+      <div class="sidebar-foot">
+        <div id="engine-badge" class="engine-badge">正在检测设备…</div>
+        <div class="sidebar-links">
+          <button id="theme-toggle" class="icon-button" title="切换主题" aria-label="切换主题"></button>
+          <span id="version-label" class="version"></span>
+        </div>
+      </div>
+    </aside>
+
+    <main id="main">
+      <header id="topbar">
+        <div class="topbar-title">
+          <h1 id="page-title">翻译</h1>
+          <span id="page-subtitle">本地模型 · 无云端调用</span>
+        </div>
+        <div class="topbar-actions">
+          <div id="device-pill" class="pill">设备检测中</div>
+          <div id="model-pill" class="pill ghost">模型未加载</div>
+          <div class="window-controls">
+            <button id="window-collapse" aria-label="收起为小窗">↙</button>
+            <button id="window-minimize" aria-label="最小化">−</button>
+            <button id="window-close" aria-label="关闭">×</button>
+          </div>
+        </div>
+      </header>
+
+      <section id="view" tabindex="-1"></section>
+
+      <footer id="statusbar">
+        <span id="status-text">就绪</span>
+        <span class="status-sep">·</span>
+        <span id="status-stats">0 字</span>
+        <span class="status-sep">·</span>
+        <span id="status-queue">队列空闲</span>
+        <span class="status-spacer"></span>
+        <span id="status-device">未连接</span>
+      </footer>
+    </main>
+  </div>
+
+  <div id="toasts" aria-live="polite"></div>
+  <div id="modal-root"></div>
+  <script type="module" src="/js/main.js?v=__APP_VERSION__"></script>
+</body>
+</html>

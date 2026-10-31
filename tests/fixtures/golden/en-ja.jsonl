@@ -1,0 +1,8 @@
+{"source": "The update fixes a crash when the cache directory is missing.", "reference": "このアップデートは、キャッシュディレクトリがない場合のクラッシュを修正します。", "domain": "technical"}
+{"source": "Please submit your expense report by next Monday.", "reference": "来週の月曜日までに経費精算書を提出してください。", "domain": "business"}
+{"source": "The weather is lovely today. Let's take a walk in the park this afternoon.", "reference": "今日はとてもいい天気ですね。午後は公園を散歩しましょう。", "domain": "daily"}
+{"source": "The meeting materials were sent to all participants yesterday.", "reference": "会議資料は昨日、全ての参加者に送付されました。", "domain": "business"}
+{"source": "Flights tomorrow may be delayed because of the typhoon.", "reference": "台風の影響で、明日の便が遅れる可能性があります。", "domain": "news"}
+{"source": "This product supports Chinese, Japanese, and English.", "reference": "本製品は中国語、日本語、英語に対応しています。", "domain": "product"}
+{"source": "If you forget your password, you can reset it on the login page.", "reference": "パスワードを忘れた場合は、ログインページで再設定できます。", "domain": "ui"}
+{"source": "The signature dish at this restaurant is braised pork belly.", "reference": "このレストランの看板料理は紅焼肉です。", "domain": "daily"}

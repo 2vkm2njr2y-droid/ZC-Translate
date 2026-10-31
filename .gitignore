@@ -1,0 +1,28 @@
+# Python / 虚拟环境
+__pycache__/
+*.py[cod]
+.venv-runtime/
+.venv-convert/
+
+# 构建产物
+build/
+dist/
+*.spec
+*.log
+
+# 本机数据与模型（绝不提交）
+models/
+data/
+vendor/
+
+# 工具与测试临时目录
+.pytest_cache/
+.pytest-work/
+pytest-of-*/
+.ruff_cache/
+.tools/
+.dsh/
+
+# 系统杂物
+.DS_Store
+Thumbs.db

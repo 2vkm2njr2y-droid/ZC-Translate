@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="system">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="zc-token" content="__ZC_TOKEN__">
+  <title>ZC 划译</title>
+  <link rel="stylesheet" href="/assets/styles.css?v=__APP_VERSION__">
+</head>
+<body class="overlay-mode">
+  <section id="zc-overlay" class="zc-overlay hidden" aria-live="polite" aria-label="划译结果">
+    <header class="zc-overlay-head">
+      <span class="zc-overlay-brand">划译</span>
+      <span id="zc-overlay-lang" class="zc-overlay-lang"></span>
+      <div class="zc-overlay-actions">
+        <button id="zc-overlay-copy" class="ghost small" type="button">复制</button>
+        <button id="zc-overlay-close" class="zc-overlay-close" type="button" aria-label="关闭划译" title="关闭">×</button>
+      </div>
+    </header>
+    <p id="zc-overlay-source" class="zc-overlay-source"></p>
+    <div id="zc-overlay-status" class="zc-overlay-status">正在翻译…</div>
+    <div id="zc-overlay-target" class="zc-overlay-target"></div>
+  </section>
+  <script type="module" src="/js/overlay.js?v=__APP_VERSION__"></script>
+</body>
+</html>

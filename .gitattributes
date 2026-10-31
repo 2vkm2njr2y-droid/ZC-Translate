@@ -1,0 +1,24 @@
+# 统一按内容自动识别文本，避免 Windows 换行差异造成整文件 diff
+* text=auto
+
+# Windows 脚本必须是 CRLF，否则 cmd.exe 可能解析异常
+*.bat text eol=crlf
+*.ps1 text eol=crlf
+
+# 二进制资源
+*.png binary
+*.ico binary
+*.onnx binary
+*.bin binary
+*.zip binary
+*.exe binary
+
+# 文档与代码统一 LF
+*.md text eol=lf
+*.py text eol=lf
+*.js text eol=lf
+*.css text eol=lf
+*.html text eol=lf
+*.json text eol=lf
+*.toml text eol=lf
+*.txt text eol=lf

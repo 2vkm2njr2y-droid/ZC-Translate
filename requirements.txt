@@ -1,0 +1,7 @@
+fastapi==0.162.0
+uvicorn==0.54.0
+pywebview==6.2.1
+openvino-genai==2026.4.1.0
+pysbd==0.3.4
+sherpa-onnx==2.0.1
+sounddevice==0.5.6
