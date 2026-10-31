@@ -1,4 +1,4 @@
-# ZC Translate (ZC 离线翻译)
+﻿# ZC Translate (ZC 离线翻译)
 
 > Aplicación de escritorio que traduce **chino · japonés · inglés** de forma totalmente **local**: **Hy-MT2** de Tencent Hunyuan (Apache-2.0) se ejecuta en **NPU / GPU / CPU** de Intel mediante **OpenVINO GenAI**, con una interfaz local FastAPI + pywebview. No accede a la red en tiempo de ejecución, salvo cuando tú descargas modelos de forma explícita.
 
@@ -91,8 +91,8 @@ Descarga un recurso de [Releases](https://github.com/2vkm2njr2y-droid/ZC-Transla
 
 | Recurso | Descripción |
 |---|---|
-| `ZCTranslate-0.1.0-win64-setup.exe` | Instalador NSIS: instala en `%LOCALAPPDATA%\Programs\ZCTranslate` con acceso en el menú Inicio y desinstalador |
-| `ZCTranslate-0.1.0-win64-portable.zip` | Portable: descomprime y ejecuta; ajustes y caché quedan en `data\` |
+| `ZCTranslate-0.1.1-win64-setup.exe` | Instalador NSIS: instala en `%LOCALAPPDATA%\Programs\ZCTranslate` con acceso en el menú Inicio y desinstalador |
+| `ZCTranslate-0.1.1-win64-portable.zip` | Portable: descomprime y ejecuta; ajustes y caché quedan en `data\` |
 | `SHA256SUMS.txt` | Sumas de verificación |
 
 > **Ni el instalador ni el ZIP incluyen modelos.** Prepara uno como se explica abajo; sin modelo la aplicación arranca pero no traduce. El instalador no está firmado, así que SmartScreen mostrará «Más información → Ejecutar de todas formas».
@@ -336,7 +336,7 @@ Arquitectura: [docs/architecture.md](docs/architecture.md); modelos: [docs/model
 powershell -ExecutionPolicy Bypass -File scripts\build_portable.ps1
 
 # Publicación: recompilar, quitar rutas locales y data\, generar ZIP + instalador NSIS
-powershell -ExecutionPolicy Bypass -File scripts\build_release.ps1 -Version 0.1.0
+powershell -ExecutionPolicy Bypass -File scripts\build_release.ps1 -Version 0.1.1
 ```
 
 - `build_portable.ps1 -Release` escribe la ruta relativa `models` en `models-path.txt`, elimina `data\`, incluye `LICENSE` / `THIRD_PARTY_NOTICES.md` / los cinco README y añade un lanzador ASCII `Start-ZCTranslate.bat` de respaldo.

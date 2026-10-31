@@ -93,19 +93,6 @@ if ($IncludeModels) {
     Write-Host "未复制模型：包内不包含 models 目录，启动器会查找外部模型。" -ForegroundColor Yellow
 }
 
-if ($Release) {
-    # 公开发行包不能带本机测试数据（历史、术语库、翻译记忆、日志）。
-    $dataDir = Join-Path $resolvedDist "data"
-    if (Test-Path $dataDir) {
-        $resolvedData = (Resolve-Path $dataDir).Path
-        if ($resolvedData -ne (Join-Path $resolvedExpectedDist "data")) {
-            throw "拒绝删除：$resolvedData 不是预期的 data 目录"
-        }
-        Remove-Item -LiteralPath $resolvedData -Recurse -Force
-        Write-Host "已删除包内本机数据：$resolvedData" -ForegroundColor Yellow
-    }
-}
-
 New-Item -ItemType File -Force -Path (Join-Path $resolvedDist "portable.flag") | Out-Null
 
 $copyFiles = @(
@@ -138,32 +125,23 @@ if (-not (Test-Path $launcherTemplate)) {
 $workspaceModels = Join-Path $Root "models"
 
 # 直接双击 exe 时读取的模型指针；相对路径以包目录为基准。
+# 本机 dist 始终保留可用的开发布局（指向工作区 models），
+# 公开发行目录在下面单独复制并改写，避免破坏日常使用的 dist。
 $pointerPath = Join-Path $resolvedDist "models-path.txt"
-if ($Release) {
-    # 公开发行包：不能写入构建机的绝对路径。
-    $pointerLines = @(
-        "# Put your models folder next to ZCTranslate.exe, or edit this path.",
-        "# Relative paths resolve against this folder. See README for how to prepare models.",
-        "models"
-    )
-} else {
-    $pointerLines = @(
-        "# Edit this file if the models folder moves. Relative paths resolve against this folder.",
-        $workspaceModels
-    )
-}
+$pointerLines = @(
+    "# Edit this file if the models folder moves. Relative paths resolve against this folder.",
+    $workspaceModels
+)
 Set-Content -LiteralPath $pointerPath -Value $pointerLines -Encoding ASCII
 
-$launcherModels = if ($Release) { "" } else { $workspaceModels }
 $launcher = (Get-Content -Raw -Encoding ASCII $launcherTemplate).Replace(
-    "__ZC_WORKSPACE_MODELS__", $launcherModels
+    "__ZC_WORKSPACE_MODELS__", $workspaceModels
 )
 $launcherPath = Join-Path $resolvedDist "启动翻译器.bat"
 Set-Content -LiteralPath $launcherPath -Value (Convert-ToCrlf $launcher) -Encoding ASCII -NoNewline
 
-if ($Release) {
-    # 纯 ASCII 兜底启动器：避免中文文件名在非中文系统解压后乱码导致无法启动。
-    $asciiLauncher = @"
+# 纯 ASCII 兜底启动器：避免中文文件名在非中文系统解压后乱码导致无法启动。
+$asciiLauncher = @"
 @echo off
 setlocal EnableExtensions
 cd /d "%~dp0"
@@ -176,9 +154,8 @@ if not defined ZC_MODELS_DIR (
 )
 start "" "%~dp0ZCTranslate.exe" %*
 "@
-    $asciiPath = Join-Path $resolvedDist "Start-ZCTranslate.bat"
-    Set-Content -LiteralPath $asciiPath -Value (Convert-ToCrlf $asciiLauncher) -Encoding ASCII -NoNewline
-}
+$asciiPath = Join-Path $resolvedDist "Start-ZCTranslate.bat"
+Set-Content -LiteralPath $asciiPath -Value (Convert-ToCrlf $asciiLauncher) -Encoding ASCII -NoNewline
 
 # 使用说明（UTF-8 BOM，CRLF）。
 $usageSource = Join-Path $Root "docs\portable-usage.txt"
@@ -186,27 +163,64 @@ if (-not (Test-Path $usageSource)) {
     throw "缺少使用说明：$usageSource"
 }
 $usage = (Get-Content -Raw -Encoding UTF8 $usageSource).Replace(
-    "__ZC_WORKSPACE_MODELS__", $(if ($Release) { "models" } else { $workspaceModels })
+    "__ZC_WORKSPACE_MODELS__", $workspaceModels
 )
 $usagePath = Join-Path $resolvedDist "使用说明.txt"
 Set-Content -LiteralPath $usagePath -Value (Convert-ToCrlf $usage) -Encoding UTF8 -NoNewline
 
-$files = Get-ChildItem $resolvedDist -Recurse -File
+# 公开发行目录：复制一份再改写，dist 里的模型指针、data\ 与日志保持不变。
+$releaseDist = $null
+if ($Release) {
+    $releaseDist = Join-Path $Root "build\release\ZCTranslate"
+    $releaseParent = Split-Path $releaseDist -Parent
+    if (Test-Path $releaseDist) { Remove-Item -LiteralPath $releaseDist -Recurse -Force }
+    New-Item -ItemType Directory -Force -Path $releaseParent | Out-Null
+    # 只排除顶层 data\ 与 models\，不要用裸目录名（会误伤 rapidocr\models 等）。
+    & robocopy $resolvedDist $releaseDist /MIR `
+        /XD (Join-Path $resolvedDist "data") (Join-Path $resolvedDist "models") `
+        /XF "*.log" /NFL /NDL /NJH /NJS /NP | Out-Null
+    if ($LASTEXITCODE -ge 8) { throw "复制发行目录失败：robocopy exit $LASTEXITCODE" }
+    foreach ($unexpected in @("data", "models")) {
+        $path = Join-Path $releaseDist $unexpected
+        if (Test-Path $path) { Remove-Item -LiteralPath $path -Recurse -Force }
+    }
+
+    $releasePointer = @(
+        "# Put your models folder next to ZCTranslate.exe, or edit this path.",
+        "# Relative paths resolve against this folder. See README for how to prepare models.",
+        "models"
+    )
+    Set-Content -LiteralPath (Join-Path $releaseDist "models-path.txt") -Value $releasePointer -Encoding ASCII
+
+    $releaseLauncher = (Get-Content -Raw -Encoding ASCII $launcherTemplate).Replace(
+        "__ZC_WORKSPACE_MODELS__", ""
+    )
+    Set-Content -LiteralPath (Join-Path $releaseDist "启动翻译器.bat") `
+        -Value (Convert-ToCrlf $releaseLauncher) -Encoding ASCII -NoNewline
+
+    $releaseUsage = (Get-Content -Raw -Encoding UTF8 $usageSource).Replace(
+        "__ZC_WORKSPACE_MODELS__", "models"
+    )
+    Set-Content -LiteralPath (Join-Path $releaseDist "使用说明.txt") `
+        -Value (Convert-ToCrlf $releaseUsage) -Encoding UTF8 -NoNewline
+}
+
+$summaryDist = if ($Release -and $releaseDist) { $releaseDist } else { $resolvedDist }
+$files = Get-ChildItem $summaryDist -Recurse -File
 $total = ($files | Measure-Object Length -Sum).Sum
 $hash = (Get-FileHash $exe -Algorithm SHA256).Hash
 
 Write-Host "`n完成：$exe" -ForegroundColor Green
 Write-Host ("包大小：{0:N1} MB，{1} 个文件" -f ($total / 1MB), $files.Count)
 Write-Host "EXE SHA256：$hash"
+Write-Host "本机可运行目录：$resolvedDist（模型指针 -> $workspaceModels，data\ 保留）"
 if ($Release) {
-    Write-Host "模式：公开发行（已去除本机路径、data\ 与模型）" -ForegroundColor Yellow
+    Write-Host "公开发行目录：$releaseDist" -ForegroundColor Yellow
+    Write-Host "模式：已去除本机路径、data\ 与模型；打包 ZIP/安装包时使用发行目录。" -ForegroundColor Yellow
     Write-Host "模型：未包含；请把 models 放到包目录，或用 models-path.txt / --models-dir 指向。" -ForegroundColor Yellow
 } elseif ($IncludeModels) {
     Write-Host "模型：已复制到 $resolvedDist\models" -ForegroundColor Yellow
 } else {
     Write-Host "模型：未复制；启动器会查找 $workspaceModels 或 exe 旁的 models。" -ForegroundColor Yellow
-}
-if (-not $Release) {
-    Write-Host "模型指针：$pointerPath -> $workspaceModels"
 }
 Write-Host "启动：双击 $launcherPath"

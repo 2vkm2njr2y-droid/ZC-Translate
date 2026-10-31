@@ -144,6 +144,13 @@ def is_window_visible(hwnd: int) -> bool:
     return bool(user32.IsWindowVisible(ctypes.c_void_p(hwnd)))
 
 
+def is_window_minimized(hwnd: int) -> bool:
+    user32 = _lib("user32")
+    user32.IsIconic.argtypes = (ctypes.c_void_p,)
+    user32.IsIconic.restype = ctypes.c_bool
+    return bool(user32.IsIconic(ctypes.c_void_p(hwnd)))
+
+
 def hide_window(hwnd: int) -> None:
     user32 = _lib("user32")
     user32.ShowWindow.argtypes = (ctypes.c_void_p, ctypes.c_int)

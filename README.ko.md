@@ -1,4 +1,4 @@
-# ZC 오프라인 번역 (ZC Translate)
+﻿# ZC 오프라인 번역 (ZC Translate)
 
 > **중국어 · 일본어 · 영어**를 로컬에서 번역하는 데스크톱 앱입니다. Tencent Hunyuan **Hy-MT2**(Apache-2.0)를 **OpenVINO GenAI**로 Intel **NPU / GPU / CPU**에서 추론하며, UI는 로컬 FastAPI + pywebview입니다. 사용자가 직접 모델을 내려받는 경우를 제외하면 실행 중 네트워크에 접속하지 않습니다.
 
@@ -91,8 +91,8 @@ UI는 현재 **중국어 간체만** 지원합니다.
 
 | 자산 | 설명 |
 |---|---|
-| `ZCTranslate-0.1.0-win64-setup.exe` | NSIS 설치 프로그램: `%LOCALAPPDATA%\Programs\ZCTranslate`에 설치, 시작 메뉴와 제거 프로그램 포함 |
-| `ZCTranslate-0.1.0-win64-portable.zip` | 포터블: 압축을 풀고 실행, 설정과 캐시는 동봉된 `data\`에 저장 |
+| `ZCTranslate-0.1.1-win64-setup.exe` | NSIS 설치 프로그램: `%LOCALAPPDATA%\Programs\ZCTranslate`에 설치, 시작 메뉴와 제거 프로그램 포함 |
+| `ZCTranslate-0.1.1-win64-portable.zip` | 포터블: 압축을 풀고 실행, 설정과 캐시는 동봉된 `data\`에 저장 |
 | `SHA256SUMS.txt` | 체크섬 |
 
 > **설치 프로그램과 포터블 모두 모델을 포함하지 않습니다.** 처음 사용하기 전에 아래 절차로 모델을 준비하세요. 모델이 없으면 앱은 실행되지만 번역할 수 없습니다. 설치 프로그램은 코드 서명이 없어 SmartScreen에서 "추가 정보 → 실행"이 필요합니다.
@@ -334,7 +334,7 @@ powershell -ExecutionPolicy Bypass -File scripts\setup_env.ps1
 powershell -ExecutionPolicy Bypass -File scripts\build_portable.ps1
 
 # 공개 릴리스: 재빌드 + 로컬 경로와 data\ 제거 + ZIP과 NSIS 설치 프로그램 생성
-powershell -ExecutionPolicy Bypass -File scripts\build_release.ps1 -Version 0.1.0
+powershell -ExecutionPolicy Bypass -File scripts\build_release.ps1 -Version 0.1.1
 ```
 
 - `build_portable.ps1 -Release`는 `models-path.txt`를 상대 경로 `models`로 쓰고, `data\`를 지우고, `LICENSE` / `THIRD_PARTY_NOTICES.md` / 5개 언어 README를 넣으며, ASCII 전용 `Start-ZCTranslate.bat`도 추가합니다.

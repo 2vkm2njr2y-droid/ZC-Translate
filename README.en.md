@@ -1,4 +1,4 @@
-# ZC Translate (ZC 离线翻译)
+﻿# ZC Translate (ZC 离线翻译)
 
 > A fully **local** Chinese · Japanese · English translation desktop app: Tencent Hunyuan **Hy-MT2** (Apache-2.0) running on Intel **NPU / GPU / CPU** via **OpenVINO GenAI**, with a local FastAPI + pywebview UI. It does not access the network at runtime, except when you explicitly download models.
 
@@ -91,8 +91,8 @@ Grab an asset from [Releases](https://github.com/2vkm2njr2y-droid/ZC-Translate/r
 
 | Asset | Description |
 |---|---|
-| `ZCTranslate-0.1.0-win64-setup.exe` | NSIS installer: installs to `%LOCALAPPDATA%\Programs\ZCTranslate` with Start Menu shortcut and uninstaller |
-| `ZCTranslate-0.1.0-win64-portable.zip` | Portable: unzip and run; settings and caches stay in the bundled `data\` |
+| `ZCTranslate-0.1.1-win64-setup.exe` | NSIS installer: installs to `%LOCALAPPDATA%\Programs\ZCTranslate` with Start Menu shortcut and uninstaller |
+| `ZCTranslate-0.1.1-win64-portable.zip` | Portable: unzip and run; settings and caches stay in the bundled `data\` |
 | `SHA256SUMS.txt` | Checksums |
 
 > **Neither package includes models.** Prepare a model as described below, otherwise the app starts but cannot translate. The installer is unsigned, so SmartScreen will show “More info → Run anyway”.
@@ -336,7 +336,7 @@ Architecture: [docs/architecture.md](docs/architecture.md); model details: [docs
 powershell -ExecutionPolicy Bypass -File scripts\build_portable.ps1
 
 # Public release: rebuild, strip local paths and data\, produce ZIP + NSIS installer
-powershell -ExecutionPolicy Bypass -File scripts\build_release.ps1 -Version 0.1.0
+powershell -ExecutionPolicy Bypass -File scripts\build_release.ps1 -Version 0.1.1
 ```
 
 - `build_portable.ps1 -Release` writes a relative `models` path into `models-path.txt`, removes `data\`, bundles `LICENSE` / `THIRD_PARTY_NOTICES.md` / all five READMEs, and adds an ASCII-only `Start-ZCTranslate.bat` fallback launcher.

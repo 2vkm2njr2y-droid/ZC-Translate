@@ -49,6 +49,7 @@ class DesktopShell:
         self._first_close = True
         self._main_hwnd = 0
         self._main_size: tuple[int, int] | None = None
+        self._main_dpi = 96
         self._frame_started = False
 
         overlay_window.events.loaded += self._on_overlay_loaded
@@ -83,11 +84,14 @@ class DesktopShell:
         self._init_thread.start()
 
     def _start_frame(self) -> None:
-        if self._frame_started:
-            return
         hwnd = self._main_hwnd or self._resolve_main_hwnd()
         if not hwnd:
             logger.debug("Main window handle unavailable; frame start deferred")
+            return
+        # Capture the physical window size even when DWM rounding fails, so a
+        # later tray restore still has a reference size to fall back to.
+        self._capture_main_size()
+        if self._frame_started:
             return
         try:
             # DWM clips the opaque WebView2 window itself.  A Win32 region
@@ -95,12 +99,75 @@ class DesktopShell:
             # leave black square corners; keep the stable native silhouette.
             win32.apply_dwm_rounding(hwnd)
             self._frame_started = True
-            rect = win32.get_window_rect(hwnd)
-            if rect.width > 0 and rect.height > 0:
-                self._main_size = (int(rect.width), int(rect.height))
             logger.info("DWM rounded corners applied")
         except Exception:
             logger.exception("Could not apply DWM rounded corners")
+
+    def _capture_main_size(self) -> bool:
+        """Remember the physical window size once, before any DPI re-scaling.
+
+        WinForms reports sizes in device pixels but applies its own DPI
+        scaling whenever the form is re-shown; keeping the first measured
+        physical size (and the DPI it was measured at) lets ``show_main``
+        put the window back exactly where it was instead of letting it grow
+        a little on every tray cycle.
+        """
+        if self._main_size is not None:
+            return True
+        hwnd = self._main_hwnd or self._resolve_main_hwnd()
+        if not hwnd:
+            return False
+        try:
+            if win32.is_window_minimized(hwnd):
+                return False
+            rect = win32.get_window_rect(hwnd)
+            if rect.width <= 0 or rect.height <= 0:
+                return False
+            self._main_size = (int(rect.width), int(rect.height))
+            dpi = win32.get_window_dpi(hwnd)
+            self._main_dpi = int(dpi) if dpi else 96
+            logger.info(
+                "Main window size captured: %sx%s (dpi=%s)",
+                self._main_size[0], self._main_size[1], self._main_dpi,
+            )
+            return True
+        except Exception:
+            logger.debug("Could not capture main window size", exc_info=True)
+            return False
+
+    def _apply_main_size(self) -> None:
+        """Resize the main window back to its captured physical size."""
+        if self._main_size is None and not self._capture_main_size():
+            return
+        hwnd = self._main_hwnd or self._resolve_main_hwnd()
+        if not hwnd or self._main_size is None:
+            return
+        try:
+            if win32.is_window_minimized(hwnd):
+                return
+            dpi = int(win32.get_window_dpi(hwnd) or self._main_dpi)
+        except Exception:
+            dpi = self._main_dpi
+        width, height = self._main_size
+        if dpi and self._main_dpi and dpi != self._main_dpi:
+            # Physical size follows the monitor DPI; keep the same logical size.
+            ratio = dpi / float(self._main_dpi)
+            width = max(1, int(round(width * ratio)))
+            height = max(1, int(round(height * ratio)))
+        try:
+            win32.resize_window(hwnd, width, height)
+            logger.debug("Main window size applied: %sx%s (dpi=%s)", width, height, dpi)
+        except Exception:
+            logger.debug("Could not apply main window size", exc_info=True)
+
+    def _schedule_main_size_restore(self) -> None:
+        """Re-apply the size after WinForms finishes its own restore pass."""
+        if self._main_size is None:
+            return
+        for delay in (0.08, 0.30):
+            timer = threading.Timer(delay, self._apply_main_size)
+            timer.daemon = True
+            timer.start()
 
     def set_frame_color(self, color: Any) -> bool:
         if not isinstance(color, str):
@@ -117,15 +184,7 @@ class DesktopShell:
 
     def restore_main_size(self) -> None:
         """Undo WinForms' DIP-sized restore bounds after tray/show cycles."""
-        if not self._main_size:
-            return
-        hwnd = self._main_hwnd or self._resolve_main_hwnd()
-        if not hwnd:
-            return
-        try:
-            win32.resize_window(hwnd, *self._main_size)
-        except Exception:
-            logger.debug("Could not restore main window size", exc_info=True)
+        self._apply_main_size()
 
     def stop(self) -> None:
         if self._stopped:
@@ -162,6 +221,8 @@ class DesktopShell:
         if self._quitting:
             return
         self.overlay.hide()
+        # Remember the size while the window still reports its real bounds.
+        self._capture_main_size()
         hwnd = self._main_hwnd or self._resolve_main_hwnd()
         if hwnd:
             try:
@@ -197,8 +258,9 @@ class DesktopShell:
         if hwnd:
             try:
                 win32.restore_window(hwnd)
-                self.restore_main_size()
+                self._apply_main_size()
                 win32.apply_dwm_rounding(hwnd)
+                self._schedule_main_size_restore()
                 return
             except Exception:
                 logger.debug("Could not restore main window", exc_info=True)
@@ -207,6 +269,7 @@ class DesktopShell:
             self.main_window.restore()
         except Exception:
             logger.warning("Could not show main window", exc_info=True)
+        self._schedule_main_size_restore()
 
     def toggle_selection(self) -> None:
         try:

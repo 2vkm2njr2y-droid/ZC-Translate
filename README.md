@@ -1,4 +1,4 @@
-# ZC 离线翻译（ZC Translate）
+﻿# ZC 离线翻译（ZC Translate）
 
 > 本地运行的**中 · 日 · 英**翻译桌面应用：腾讯混元 **Hy-MT2**（Apache-2.0）经 **OpenVINO GenAI** 在 Intel **NPU / GPU / CPU** 上推理，界面为本地 FastAPI + pywebview。除用户主动下载模型外，运行期不访问网络。
 
@@ -91,8 +91,8 @@
 
 | 资产 | 说明 |
 |---|---|
-| `ZCTranslate-0.1.0-win64-setup.exe` | NSIS 安装包：装到 `%LOCALAPPDATA%\Programs\ZCTranslate`，带开始菜单快捷方式与卸载 |
-| `ZCTranslate-0.1.0-win64-portable.zip` | 便携版：解压即用，设置与缓存留在包内 `data\` |
+| `ZCTranslate-0.1.1-win64-setup.exe` | NSIS 安装包：装到 `%LOCALAPPDATA%\Programs\ZCTranslate`，带开始菜单快捷方式与卸载 |
+| `ZCTranslate-0.1.1-win64-portable.zip` | 便携版：解压即用，设置与缓存留在包内 `data\` |
 | `SHA256SUMS.txt` | 校验和 |
 
 > **安装包/便携包都不含模型**，首次使用前请按下一节准备模型；未找到模型时应用能启动但不能翻译。安装包未做代码签名，SmartScreen 会提示"更多信息 → 仍要运行"。
@@ -335,7 +335,7 @@ powershell -ExecutionPolicy Bypass -File scripts\setup_env.ps1
 powershell -ExecutionPolicy Bypass -File scripts\build_portable.ps1
 
 # 公开发行：重建 + 去掉本机路径与 data\ + 生成 ZIP 与 NSIS 安装包
-powershell -ExecutionPolicy Bypass -File scripts\build_release.ps1 -Version 0.1.0
+powershell -ExecutionPolicy Bypass -File scripts\build_release.ps1 -Version 0.1.1
 ```
 
 - `build_portable.ps1 -Release` 会把 `models-path.txt` 写成相对路径 `models`、清理 `data\`、加入 `LICENSE` / `THIRD_PARTY_NOTICES.md` / 五种语言 README，并额外生成纯 ASCII 的 `Start-ZCTranslate.bat` 兜底启动器。

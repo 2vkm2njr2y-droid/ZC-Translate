@@ -35,25 +35,29 @@ Write-Host "版本：$Version" -ForegroundColor Green
 Write-Host "输出：$outDir"
 
 # ---------------------------------------------------------------- portable build
-$dist = Join-Path $Root "dist\ZCTranslate"
+# build_portable.ps1 -Release 会把中立发行目录写到 build\release\ZCTranslate，
+# 本机日常使用的 dist\ZCTranslate 保持不变（模型指针、data\ 都不动）。
+$dist = Join-Path $Root "build\release\ZCTranslate"
 if (-not $SkipBuild) {
-    Write-Step "构建便携目录版（-Release：去掉本机路径与 data\）"
+    Write-Step "构建便携目录版并生成中立发行目录"
     $buildArgs = @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\build_portable.ps1", "-Release")
     if ($Clean) { $buildArgs += "-Clean" }
     & powershell @buildArgs
     Assert-Exit "build_portable.ps1"
 } else {
-    Write-Step "跳过 exe 构建，复用现有 dist"
+    Write-Step "跳过 exe 构建，复用 build\release\ZCTranslate"
 }
 
 $exe = Join-Path $dist "ZCTranslate.exe"
-if (-not (Test-Path $exe)) { throw "未找到 $exe。请去掉 -SkipBuild 重新构建。" }
+if (-not (Test-Path $exe)) {
+    throw "未找到 $exe。请去掉 -SkipBuild，先运行 scripts\build_portable.ps1 -Release。"
+}
 
 # ---------------------------------------------------------------- 发布前自检
 Write-Step "发布前自检"
 $problems = @()
 
-# 运行打包版做验收测试时可能生成 dist\ZCTranslate\data（日志/数据库），发布前清掉。
+# 运行打包版做验收测试时可能生成 data（日志/数据库），发布前清掉。
 $dataDir = Join-Path $dist "data"
 if (Test-Path $dataDir) {
     $resolvedDistForData = (Resolve-Path $dist).Path
@@ -100,7 +104,7 @@ $zipPath = Join-Path $outDir "ZCTranslate-$Version-win64-portable.zip"
 if (-not $SkipZip) {
     Write-Step "生成便携版 ZIP"
     if (Test-Path $zipPath) { Remove-Item -LiteralPath $zipPath -Force }
-    & tar.exe -a -c -f $zipPath -C (Join-Path $Root "dist") "ZCTranslate"
+    & tar.exe -a -c -f $zipPath -C (Join-Path $Root "build\release") "ZCTranslate"
     Assert-Exit "tar 打包"
     $entries = & tar.exe -tf $zipPath
     Assert-Exit "ZIP 校验"
@@ -156,6 +160,8 @@ if (-not $SkipInstaller) {
     $built = Join-Path $stagingDir "ZCTranslate-$Version-win64-setup.exe"
     $nsisTemp = Join-Path $Root ".tools\tmp"
     New-Item -ItemType Directory -Force -Path $nsisTemp | Out-Null
+    Get-ChildItem $stagingDir -Filter "ZCTranslate-*-win64-setup.exe" -ErrorAction SilentlyContinue |
+        Remove-Item -Force -ErrorAction SilentlyContinue
 
     $savedTemp = $env:TEMP
     $savedTmp = $env:TMP
@@ -165,7 +171,8 @@ if (-not $SkipInstaller) {
     try {
         for ($attempt = 1; $attempt -le 2 -and -not $compiled; $attempt++) {
             if (Test-Path $built) { Remove-Item -LiteralPath $built -Force -ErrorAction SilentlyContinue }
-            & $makensis "/DAPPVERSION=$Version" "/DOUTDIR=$stagingDir" "/DDIST=$dist" "scripts\installer.nsi"
+            # 注意：脚本里的变量名带下划线（APP_VERSION），/D 必须同名。
+            & $makensis "/DAPP_VERSION=$Version" "/DOUTDIR=$stagingDir" "/DDIST=$dist" "scripts\installer.nsi"
             if ($LASTEXITCODE -eq 0 -and (Test-Path $built)) {
                 $compiled = $true
             } else {

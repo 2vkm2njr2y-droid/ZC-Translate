@@ -159,6 +159,117 @@ def test_start_frame_applies_dwm_rounding(monkeypatch):
     assert shell._main_size == (620, 460)
 
 
+class FakeTimer:
+    def __init__(self, interval, callback):
+        self.interval = interval
+        self.callback = callback
+        self.daemon = False
+        self.started = False
+
+    def start(self):
+        self.started = True
+
+
+def patch_timers(monkeypatch):
+    timers = []
+
+    def factory(interval, callback):
+        timer = FakeTimer(interval, callback)
+        timers.append(timer)
+        return timer
+
+    monkeypatch.setattr(shell_module.threading, "Timer", factory)
+    return timers
+
+
+def test_hide_captures_size_before_hiding(monkeypatch):
+    shell, _main, _overlay = make_shell()
+    monkeypatch.setattr(
+        shell_module.win32,
+        "get_window_rect",
+        lambda hwnd: SimpleNamespace(width=908, height=634),
+    )
+    monkeypatch.setattr(shell_module.win32, "get_window_dpi", lambda hwnd: 144)
+    monkeypatch.setattr(shell_module.win32, "is_window_minimized", lambda hwnd: False)
+    monkeypatch.setattr(shell_module.win32, "hide_window", lambda hwnd: None)
+
+    shell.hide_main()
+
+    assert shell._main_size == (908, 634)
+    assert shell._main_dpi == 144
+
+
+def test_show_applies_captured_size_and_schedules_follow_up(monkeypatch):
+    shell, _main, _overlay = make_shell()
+    shell._main_size = (908, 634)
+    shell._main_dpi = 144
+    resized = []
+    monkeypatch.setattr(shell_module.win32, "restore_window", lambda hwnd: None)
+    monkeypatch.setattr(shell_module.win32, "resize_window", lambda hwnd, w, h: resized.append((w, h)))
+    monkeypatch.setattr(shell_module.win32, "get_window_dpi", lambda hwnd: 144)
+    monkeypatch.setattr(shell_module.win32, "is_window_minimized", lambda hwnd: False)
+    monkeypatch.setattr(shell_module.win32, "apply_dwm_rounding", lambda hwnd: None)
+    timers = patch_timers(monkeypatch)
+
+    shell.show_main()
+
+    assert resized == [(908, 634)]
+    assert [timer.interval for timer in timers] == [0.08, 0.30]
+    assert all(timer.started for timer in timers)
+
+
+def test_show_scales_captured_size_after_dpi_change(monkeypatch):
+    shell, _main, _overlay = make_shell()
+    shell._main_size = (908, 634)
+    shell._main_dpi = 144
+    resized = []
+    monkeypatch.setattr(shell_module.win32, "restore_window", lambda hwnd: None)
+    monkeypatch.setattr(shell_module.win32, "resize_window", lambda hwnd, w, h: resized.append((w, h)))
+    monkeypatch.setattr(shell_module.win32, "get_window_dpi", lambda hwnd: 96)
+    monkeypatch.setattr(shell_module.win32, "is_window_minimized", lambda hwnd: False)
+    monkeypatch.setattr(shell_module.win32, "apply_dwm_rounding", lambda hwnd: None)
+    patch_timers(monkeypatch)
+
+    shell.restore_main_size()
+
+    # 908x634 at 144 DPI is the same logical size as 605x423 at 96 DPI.
+    assert resized == [(605, 423)]
+
+
+def test_start_frame_captures_size_when_dwm_rounding_fails(monkeypatch):
+    shell, _main, _overlay = make_shell()
+    monkeypatch.setattr(
+        shell_module.win32,
+        "get_window_rect",
+        lambda hwnd: SimpleNamespace(width=620, height=460),
+    )
+    monkeypatch.setattr(shell_module.win32, "get_window_dpi", lambda hwnd: 96)
+    monkeypatch.setattr(shell_module.win32, "is_window_minimized", lambda hwnd: False)
+
+    def explode(hwnd):
+        raise OSError("dwm unavailable")
+
+    monkeypatch.setattr(shell_module.win32, "apply_dwm_rounding", explode)
+
+    shell._start_frame()
+
+    assert shell._main_size == (620, 460)
+    assert shell._frame_started is False
+
+
+def test_show_without_handle_uses_webview_fallback_and_reschedules(monkeypatch):
+    shell, main, _overlay = make_shell()
+    shell._main_hwnd = 0
+    shell._resolve_main_hwnd = lambda: 0
+    shell._main_size = (620, 460)
+    shell._main_dpi = 96
+    patch_timers(monkeypatch)
+
+    shell.show_main()
+
+    assert main.shown == 1
+
+
 def test_toggle_selection_persists_and_notifies():
     shell, main, _overlay = make_shell()
     db = shell.db
